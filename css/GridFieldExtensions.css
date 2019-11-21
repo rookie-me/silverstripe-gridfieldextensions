@@ -26,6 +26,11 @@
   min-height: 32px;
 }
 
+.add-existing-search-dialog .list-group-item.selected {
+  color: #43536d;
+  background-color: #ced5e1;
+}
+
 .add-existing-search-dialog .btn-toolbar {
   margin-top: 12px;
 }

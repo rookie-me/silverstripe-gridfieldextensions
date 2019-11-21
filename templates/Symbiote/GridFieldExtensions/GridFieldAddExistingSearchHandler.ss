@@ -3,10 +3,10 @@ $SearchForm
 <h3><%t GridFieldExtensions.RESULTS "Results" %></h3>
 <div class="add-existing-search-results">
 	<% if $Items %>
-		<ul class="list-group add-existing-search-items" data-add-link="$Link('add')">
+		<ul class="list-group add-existing-search-items existing-list">
 			<% loop $Items %>
-				<li class="$EvenOdd list-group-item list-group-item-action">
-                    <a href="#" data-id="$ID">$Title</a>
+				<li class="$EvenOdd list-group-item list-group-item-action existing-list-item">
+                    <a href="#" data-id="$ID" class="list-item">$Title</a>
                 </li>
 			<% end_loop %>
 		</ul>
@@ -53,4 +53,10 @@ $SearchForm
 			<%end_if %>
 		</ul>
 	<% end_if %>
+</div>
+<h3><%t GridFieldExtensions.SELECTED_ITEMS "Selected Items" %></h3>
+<div class="add-existing-search-selected">
+    <ul class="list-group add-existing-search-selected-items existing-list" data-add-link="$Link('add')">
+    </ul>
+    <a href="#" class="btn btn-primary font-icon-plus submit-selected">Add Selected Items</a>
 </div>
