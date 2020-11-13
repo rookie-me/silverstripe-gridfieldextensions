@@ -620,25 +620,11 @@ class GridFieldOrderableRows extends RequestHandler implements
         // Model has sort column and is versioned - handle as versioned
         // Model has sort column and is NOT versioned - handle as NOT versioned
         // Model doesn't have sort column because sort column is on ManyManyList - handle as NOT versioned
-        // Model doesn't have sort column because sort column is on ManyManyThroughList...
-        //   - Related item is not versioned:
-        //       - Through object is versioned: THROW an error.
-        //       - Through object is NOT versioned: handle as NOT versioned
-        //   - Related item is versioned...
-        //       - Through object is versioned: handle as versioned
-        //       - Through object is NOT versioned: THROW an error.
+        // Model doesn't have sort column because sort column is on ManyManyThroughList - inspect through object
         if ($list instanceof ManyManyThroughList) {
-            $listClassVersioned = $class::create()->hasExtension(Versioned::class);
             // We'll be updating the join class, not the relation class.
             $class = $this->getManyManyInspector($list)->getJoinClass();
             $isVersioned = $class::create()->hasExtension(Versioned::class);
-
-            // If one side of the relationship is versioned and the other is not, throw an error.
-            if ($listClassVersioned xor $isVersioned) {
-                throw new Exception(
-                    'ManyManyThrough cannot mismatch Versioning between join class and related class'
-                );
-            }
         } elseif (!$this->isManyMany($list)) {
             $isVersioned = $class::create()->hasExtension(Versioned::class);
         }
@@ -769,7 +755,7 @@ class GridFieldOrderableRows extends RequestHandler implements
                 $introspector->getExtraFields() :
                 DataObjectSchema::create()->fieldSpecs($introspector->getJoinClass(), DataObjectSchema::DB_ONLY);
             $key   = $introspector->getLocalKey();
-            $foreignKey = $introspector->getForeignKey();
+            $foreignKey = $this->getManyManyInspectorForeignKey($introspector);
             $foreignID  = (int) $list->getForeignID();
 
             if ($extra && array_key_exists($this->getSortField(), $extra)) {
@@ -809,6 +795,24 @@ class GridFieldOrderableRows extends RequestHandler implements
         return $inspector;
     }
 
+
+    /**
+     * Depending on the list inspector and the list itself (ManyMany vs ManyManyThrough), the method to obtain
+     * the foreign key may be different.
+     *
+     * @param $inspector
+     * @return string
+     */
+    private function getManyManyInspectorForeignKey($inspector)
+    {
+        if (($inspector instanceof ManyManyThroughQueryManipulator) && (method_exists($inspector, 'getForeignIDKey'))) {
+            // This method has been introduced in framework 4.1
+            return $inspector->getForeignIDKey();
+        }
+
+        return $inspector->getForeignKey();
+    }
+
     /**
      * Used to get sort orders from a many many through list relationship record, rather than the current
      * record itself.
@@ -822,7 +826,7 @@ class GridFieldOrderableRows extends RequestHandler implements
 
         // Find the foreign key name, ID and class to look up
         $joinClass = $manipulator->getJoinClass();
-        $fromRelationName = $manipulator->getForeignKey();
+        $fromRelationName = $this->getManyManyInspectorForeignKey($manipulator);
         $toRelationName = $manipulator->getLocalKey();
 
         // Create a list of the MMTL relations

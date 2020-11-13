@@ -82,8 +82,13 @@ class GridFieldEditableColumns extends GridFieldDataColumns implements
             $field = clone $field;
         } else {
             $value  = $grid->getDataFieldValue($record, $col);
-            $rel = (strpos($col, '.') === false); // field references a relation value
-            $field = ($rel) ? clone $fields->fieldByName($col) : new ReadonlyField($col);
+            $field = $fields->dataFieldByName($col);
+
+            // Fall back to previous logic
+            if (!$field) {
+                $rel = (strpos($col, '.') === false); // field references a relation value
+                $field = ($rel) ? clone $fields->fieldByName($col) : new ReadonlyField($col);
+            }
 
             if (!$field) {
                 throw new Exception("Could not find the field '$col'");
@@ -138,9 +143,10 @@ class GridFieldEditableColumns extends GridFieldDataColumns implements
 
             $extra = array();
 
-            $form = $this->getForm($grid, $record);
+            $form = $this->getForm($grid, $item);
             $form->loadDataFrom($fields, Form::MERGE_CLEAR_MISSING);
             $form->saveInto($item);
+
 
             // Check if we are also sorting these records
             if ($sortable) {
@@ -154,7 +160,7 @@ class GridFieldEditableColumns extends GridFieldDataColumns implements
                 $extra = array_intersect_key($form->getData(), (array) $list->getExtraFields());
             }
 
-            $item->write();
+            $item->write(false, false, false, true);
             $list->add($item, $extra);
         }
     }
