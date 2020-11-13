@@ -61,13 +61,17 @@ class GridFieldAddExistingSearchHandler extends RequestHandler
         }
 
         $list = $this->grid->getList();
-        $item = DataList::create($list->dataClass())->byID($id);
+        $ids = explode(',', $id);
+        
+        foreach($ids as $id) {
+            $item = DataList::create($list->dataClass())->byID($id);
 
-        if (!$item) {
-            $this->httpError(400);
+            if (!$item) {
+                $this->httpError(400);
+            }
+
+            $list->add($item);
         }
-
-        $list->add($item);
     }
 
     /**

@@ -44,33 +44,58 @@
 			}
 		});
 
-		// Allow the list item to be clickable as well as the anchor
-    $('.add-existing-search-dialog .add-existing-search-items .list-group-item-action').entwine({
-      onclick: function() {
+    // Allow the list item to be clickable as well as the anchor
+    $('.add-existing-search-dialog .existing-list .list-group-item-action').entwine({
+      onclick: function () {
         if (this.children('a').length > 0) {
           this.children('a').first().trigger('click');
         }
       }
     });
 
-		$(".add-existing-search-dialog .add-existing-search-items a").entwine({
-			onclick: function() {
-				var link = this.closest(".add-existing-search-items").data("add-link");
-				var id   = this.data("id");
+    $(".add-existing-search-dialog .existing-list .list-group-item-action a").entwine({
+      onclick: function () {
+        var id = this.data('id');
+        var selectedItemList = $(".add-existing-search-dialog .add-existing-search-selected-items");
+        var searchResultItem = $(".add-existing-search-dialog .add-existing-search-items .list-group-item-action [data-id='" + id + "']").closest('li');
 
-				var dialog = this.closest(".add-existing-search-dialog")
-					 .addClass("loading")
-					 .children(".ui-dialog-content")
-					 .empty();
+        // two options
+        searchResultItem.toggleClass('selected');
 
-				$.post(link, { id: id }, function() {
-					dialog.data("grid").reload();
-					dialog.dialog("close");
-				});
+        if (searchResultItem.hasClass('selected')) {
+          // not selected yet, add to list
+          $(searchResultItem).clone().appendTo(selectedItemList);
+        } else {
+          // is selected already, remove from list
+          var selectedItem = $(".add-existing-search-dialog .add-existing-search-selected .list-group-item-action [data-id='" + id + "']").closest('li');
+          selectedItem.remove();
+        }
+        return false;
+      }
+    });
 
-				return false;
-			}
-		});
+    $(".add-existing-search-dialog .add-existing-search-selected .submit-selected").entwine({
+      onclick: function () {
+        var link = $(".add-existing-search-selected-items").data("add-link");
+
+        var itemList = $(".add-existing-search-selected-items .list-group-item a").map(function () {
+          return $(this).data("id");
+        }).get();
+
+        var ids = itemList.join(",");
+
+        var dialog = this.closest(".add-existing-search-dialog")
+          .addClass("loading")
+          .children(".ui-dialog-content")
+          .empty();
+
+        $.post(link, {id: ids}, function () {
+          dialog.data("grid").reload();
+          dialog.dialog("close");
+        });
+        return false;
+      }
+    });
 
 		$(".add-existing-search-dialog .add-existing-search-pagination a").entwine({
 			onclick: function() {
@@ -208,7 +233,7 @@
 			}
 		});
 
-		$(".ss-gridfield-delete-inline").entwine({
+		$(".grid-field .action.ss-gridfield-delete-inline").entwine({
 			onclick: function() {
 				var msg = ss.i18n._t("GridFieldExtensions.CONFIRMDEL", "Are you sure you want to delete this?");
 
